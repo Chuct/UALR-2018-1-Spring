@@ -1,0 +1,72 @@
+#include <iostream>
+using namespace std;
+
+int* populatePrimes(int &curr_arraySize);
+void listPrimes(int primes[], int arraySize);
+bool isPrime(int num);
+int* stretchArray(int primes[], int current, int &max); // Returns a pointer to a new array
+
+void main()
+{
+	int arraySize = 0;
+	listPrimes(populatePrimes(arraySize), arraySize);
+}
+
+int* populatePrimes(int &curr_arraySize)
+{
+	int input;
+	cout << "Find all primes in the range 1 - X: ";
+	cin >> input;
+
+	int max_arraySize = 1;
+	int *primeArray = new int[max_arraySize];
+	for (int i = 1; i <= input; i++)
+	{
+		if (isPrime(i))
+		{
+			if (curr_arraySize == max_arraySize)
+				primeArray = stretchArray(primeArray, curr_arraySize, max_arraySize);
+			primeArray[curr_arraySize] = i;
+			curr_arraySize++;
+		}
+	}
+	return primeArray;
+}
+
+void listPrimes(int primes[], int arraySize)
+{
+	cout << "The following numbers are prime numbers:" << endl;
+	for (int i = 0; i < arraySize; i++)
+	{
+		cout << primes[i] << endl;
+	}
+}
+
+bool isPrime(int num)
+{
+	int divisors = 0;
+	if (num == 1)
+		return false;	// By definition, the integer "1" is not prime
+	else
+	{
+		for (int i = 1; i <= num; i++)
+		{
+			if (num % i == 0)
+				divisors++;
+		}
+		if (divisors == 2)
+			return true;
+		else
+			return false;
+	}
+}
+
+int* stretchArray(int primes[], int current, int &max)
+{
+	max = (current * 2) + 1;		// Set new maximum size
+	int* nextPrimes = new int[max];	// Create temporary array
+	for (int i = 0; i <= current; i++)
+		nextPrimes[i] = primes[i];	// Copy old array to new array
+	delete[] primes;				// Delete the old array
+	return nextPrimes;
+}
