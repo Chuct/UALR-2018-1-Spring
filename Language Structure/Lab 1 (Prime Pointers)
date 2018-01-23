@@ -10,6 +10,7 @@ void main()
 {
 	int arraySize = 0;
 	listPrimes(populatePrimes(arraySize), arraySize);
+	system("pause");
 }
 
 int* populatePrimes(int &curr_arraySize)
@@ -35,7 +36,7 @@ int* populatePrimes(int &curr_arraySize)
 
 void listPrimes(int primes[], int arraySize)
 {
-	cout << "The following numbers are prime numbers:" << endl;
+	cout << "The following numbers are prime numbers in this range:" << endl;
 	for (int i = 0; i < arraySize; i++)
 	{
 		cout << primes[i] << endl;
