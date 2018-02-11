@@ -2,7 +2,7 @@
 #include <cstdlib>
 using namespace std;
 
-const int trials = 30000;
+const int trials = 100000;
 
 int getrandIndex(int);
 
@@ -12,26 +12,29 @@ void main()
 	int deck[52];
 	for (int i = 0; i < deckSize; i++)
 		deck[i] = i;
-	int randIndex, temp, matches, trialMatches;
+	int randIndex, temp, trialMatches = 0;
 
 	for (int i = 0; i < trials; i++)
 	{
-		for(int j = 0; j < deckSize; j++)
+		int deckOnePick = 0, matches = 0;
+		deckSize = 52;
+		while (deckSize > 0)
 		{
 			randIndex = getrandIndex(deckSize);
 			
 			// Check for match
-			if (deck[randIndex] == j) // If 
-			{
-				temp = deck[deckSize - 1];
-				deck[deckSize - 1] = deck[randIndex];
-				deck[randIndex] = temp;
-				deckSize--;
+			if (deck[randIndex] == deckOnePick) // If 
 				matches++;
-				break;
-			}
+			temp = deck[randIndex];
+			deck[randIndex] = deck[deckSize - 1];
+			deck[deckSize - 1] = temp;
+			deckSize--;
+			deckOnePick++;
 		}
+		if (matches >= 1)
+			trialMatches++;
 	}
+	cout << (double)trialMatches / trials;
 }
 
 int getrandIndex(int deckSize)
