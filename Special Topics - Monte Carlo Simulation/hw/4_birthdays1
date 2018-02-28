@@ -1,1 +1,144 @@
+// Colin Chu
+// Monte Carlo Simulation
+// Assignment 4 - Birthdays
+// 2/22/2018
 
+// Might have over complicated this one in some spots...
+
+#include <iostream>
+#include <iomanip>
+#include <fstream>
+using namespace std;
+
+const int trials = 20000;
+const int daysInYear = 365;
+
+ofstream fout;
+
+// FUNCTION DECLARATIONS
+
+// Functions used for strict calculation
+void calculateSwitchPoint();
+double calculateChance(int);
+
+// Functions used for simulation
+void simulateSwitchPoint();
+double chance_nPeople(int);
+bool trial_IsMatch(int);
+int getrandDate(int);
+bool isMatch(int[], int, int);
+
+// Main
+void main()
+{
+	calculateSwitchPoint();
+	fout << endl;
+	simulateSwitchPoint();
+	system("pause");
+}
+
+// FUNCTION DEFINITIONS
+
+// Functions used for strict calculation
+void calculateSwitchPoint()
+{
+	fout.open("out.txt");
+	double last = 0;
+	fout << "Output for strict calculation" << endl;
+	for (int n = 1; n <= 50; n++)
+	{
+		double chance;
+		chance = calculateChance(n);
+		if (last < 0.5 && chance > 0.5)
+		{
+			fout << endl << "Switch Found" << endl;
+			fout << right << setw(11) << "Last n: " << n - 1 << " | Chance for at least 2 matches: " << last << endl;
+			fout << right << setw(11) << "Current n: " << n << " | Chance for at least 2 matches: " << chance << endl;
+			break;
+		}
+		else
+			fout << right << "Current n: " << setw(2) << n << " | Chance for at least 2 matches: " << chance << endl;
+		last = chance;
+	}
+	fout << endl;
+	fout.close();
+}
+double calculateChance(int n)
+{
+	double term = 0;
+	for (int j = 1; j <= n; j++)
+		if (term == 0)
+			term = (366 - (j)) / 365;
+		else
+			term = term * ((double)(366 - (j)) / 365);
+	return 1 - term;
+}
+
+// Functions used for simulation
+void simulateSwitchPoint()
+{
+	// Evaluates the chance for at least two matches to be found at each n (1 - 50)
+	// Displays the proper message to the console window once chance switches from < 0.5 to > 0.5
+	fout.open("out.txt", ios::app);
+	double last, chance;
+	fout << "Output for sim. calculation" << endl;
+	for (int n = 1; n <= 50; n++)
+	{
+		chance = chance_nPeople(n);
+		if (last < 0.5 && chance > 0.5)
+		{
+			fout << endl << "Switch Found" << endl;
+			fout << right << setw(11) << "Last n: " << n - 1 << " | Chance for at least 2 matches: " << last << endl;
+			fout << right << setw(11) << "Current n: " << n << " | Chance for at least 2 matches: " << chance << endl;
+			break;
+		}
+		else
+			fout << right << "Current n: " << setw(2) << n << " | Chance for at least 2 matches: " << chance << endl;
+		last = chance;
+	}
+	fout.close();
+}
+double chance_nPeople(int n)
+{
+	// Performs a set number of trials, each one evaluating up to n guesses to find a match
+	// Returns the proportion of trials where at least one match was found
+	int trialMatches = 0;
+	for (int i = 1; i <= trials; i++)
+		if (trial_IsMatch(n))
+			trialMatches++;
+	return (double)trialMatches / trials;
+}
+bool trial_IsMatch(int n)
+{
+	// Makes n guesses from selection (0 - 364)
+	// Returns true once a match is found (If at all)
+	int *guessesArray, numGuesses, randDate;
+	guessesArray = new int[n];
+	numGuesses = 0;
+	for (int j = 1; j <= n; j++)
+	{
+		randDate = getrandDate(daysInYear); // Get random number (date) from 0 - 364
+		if (isMatch(guessesArray, randDate, numGuesses)) // Look to see if randDate matches a previous guess
+			return true;
+		else
+			guessesArray[numGuesses++] = randDate; // If not, add it to the array and increment numGuesses
+	}
+}
+int getrandDate(int upperLimit)
+{
+	// Returns a random number between 0 & (highEnd - 1), accounting for modulo bias
+	int randIndex;
+	do {
+		randIndex = rand();
+	} while (randIndex >= (RAND_MAX - (RAND_MAX % upperLimit)));
+	return randIndex % upperLimit;
+}
+bool isMatch(int guesses[], int guess, int currSize)
+{
+	for (int i = 0; i < currSize; i++)
+	{
+		if (guesses[i] == guess)
+			return true;
+	}
+	return false;
+}
