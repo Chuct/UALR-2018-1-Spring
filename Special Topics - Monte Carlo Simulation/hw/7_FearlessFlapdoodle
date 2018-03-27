@@ -1,0 +1,169 @@
+// Colin Chu
+// Monte Carlo Simulation
+// Assignment 7 - Fearless Flapdoodle
+// 3/27/2018
+
+#include <iostream>
+#include <fstream>
+#include <iomanip>
+using namespace std;
+
+const int gridWidth = 24; // Indexing starts @ 1.  Goes from 1 -> 23 (Includes Ocean Tiles)
+const int gridHalf = gridWidth / 2;
+const int trials = 100000;
+
+// Booleans
+void simulate();
+void display(int[gridWidth][gridWidth],int,int);
+int getRandDir(int);
+
+void main()
+{
+	simulate();
+	system("pause");
+}
+
+void simulate()
+{
+	int grid[gridWidth][gridWidth] = { 0 }; // Indexing @ 1 -> 22
+	int totalMoves = 0, successes = 0;
+
+	for (int i = 0; i < trials; i++)
+	{
+		// Variables
+		int x = 0, y = 0, thirst = 100, hunger = 300, moves = 0, dir;
+		bool alive = true, rescued = false, isAirport,
+			isOcean, isCannibal, isSpring;
+
+		while (alive && !rescued)
+		{
+			{
+				dir = getRandDir(4);
+				switch (dir) {
+				case 0:
+					y++;
+					break;
+				case 1:
+					x++;
+					break;
+				case 2:
+					y--;
+					break;
+				case 3:
+					x--;
+					break;
+				}
+
+				moves++;
+
+				// Booleans
+				isAirport = (x == 6 && y == 7);
+				isOcean = (x == -11 || y == -11 || x == 11 || y == 11);
+				isCannibal = (x == 2 && y == -4);
+				isSpring = (x == -3 && y == -3);
+
+				if (isSpring)
+				{
+					thirst = 100;
+					hunger--;
+					if (hunger == 0)
+					{
+						x += gridHalf;
+						y = gridHalf - y;
+						grid[y][x]++;
+						alive = false;
+					}
+				}
+				else if (isAirport)
+				{
+					x += gridHalf;
+					y = gridHalf - y;
+					grid[y][x]++;
+					rescued = true;
+					totalMoves += moves;
+					successes++;
+				}
+				else if (isCannibal)
+				{
+					x += gridHalf;
+					y = gridHalf - y;
+					grid[y][x]++;
+					alive = false;
+				}
+				else if (isOcean)
+				{
+					x += gridHalf;
+					y = gridHalf - y;
+					grid[y][x]++;
+					alive = false;
+				}
+				else
+				{
+					thirst--;
+					hunger--;
+					if (thirst == 0 || hunger == 0)
+					{
+						x += gridHalf;
+						y = gridHalf - y;
+						grid[y][x]++;
+						alive = false;
+					}
+				}
+			}
+		}
+	}
+	display(grid, totalMoves, successes);
+}
+
+void display(int grid[gridWidth][gridWidth], int tMoves, int successes)
+{
+	ofstream fout;
+	fout.open("output.txt");
+	cout << "Percentage of Success (Airport): " << ((double) grid[5][18] / trials) * 100 << endl;
+	cout << "Average moves to success: " << (double)tMoves / successes << endl << endl;
+	int x = 1, y = 1, i = gridWidth, row = 11;
+	bool notEnd = true, line = true;
+	for (int n = -11; n < gridHalf; n++)
+		fout << "|" << setw(3) << right << n << setw(3) << "|";
+	fout << endl;
+	while (i > 0)
+	{
+		if (line)
+		{
+			for (int j = 0; j < gridWidth - 1; j++)
+				fout << " ----- ";
+			fout << "----- " << endl;
+			line = false;
+			i--;
+		}
+		else
+		{
+			y = 1;
+			for (int j = 0; j < gridWidth - 1; j++)
+			{
+				if (grid[x][y] == 0)
+				{
+					fout << "|" << setw(5) << left << "" << "|";
+					y++;
+				}
+				else
+					fout << fixed << setprecision(2) << "|" << setw(5) << right << ((double)grid[x][y++] / trials) * 100 << "|";
+			}
+			fout << right << setw(3) << row-- << endl;
+			line = true;
+			notEnd = false;
+			x++;
+		}
+	}
+}
+		
+
+int getRandDir(int highEnd)
+{
+	// Returns a random number between 0 & (highEnd - 1), accounting for small modulo bias
+	int randIndex;
+	do {
+		randIndex = rand();
+	} while (randIndex >= (RAND_MAX - (RAND_MAX % highEnd)));
+	return randIndex % highEnd;
+}
