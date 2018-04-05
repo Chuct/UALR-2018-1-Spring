@@ -1,0 +1,262 @@
+// Colin Chu
+// Monte Carlo Simulation
+// Assignment 7 - Fearless Flapdoodle
+// 3/27/2018
+
+#include <iostream>
+#include <fstream>
+#include <iomanip>
+using namespace std;
+
+// Constants
+const int gridWidth = 24; // Indexing starts @ 1.  Goes from 1 -> 23 (Includes Ocean Tiles)
+const int gridHalf = gridWidth / 2;
+const int hungerValue = 60;
+const int boredomValue = 80;
+const int trials = 100000;
+
+// Data Structures
+struct XY {
+	int x = 0;
+	int y = 0;
+	bool isAirport() {
+		return (x == 9 && y == -2);
+	}
+	bool isSafe() {
+		bool isLake = (x > 4 && x < 9 && y > 5 && y < 9);
+		bool isOcean = (x == -11 || y == -11 || x == 11 || y == 11);
+		return (!isLake && !isOcean);
+	}
+	bool isPizza() {
+		return (x == -3 && y == -5);
+	}
+	bool isBank() {
+		return (x == -5 && y == -2);
+	}
+};
+
+struct Stats {
+	int successes = 0, totalMoves = 0,
+		boredDeaths = 0, hungerDeaths = 0;
+};
+
+struct Player {
+	XY coord;
+	int hunger = hungerValue;
+	bool alive = true;
+	bool rescued = false;
+	bool hasMoney = false;
+	void reset() {
+		coord.x = 0;
+		coord.y = 0;
+		alive = true;
+		rescued = false;
+		hunger = hungerValue;
+	}
+	Stats stat;
+};
+
+// Booleans
+void simulate();
+void display(int[gridWidth][gridWidth], Stats);
+bool moveIsSafe(Player&, int);
+void makeMove(Player&, int);
+void updateGrid(int[gridWidth][gridWidth], XY);
+int getRandDir(int);
+
+void main()
+{
+	simulate();
+	system("pause");
+}
+
+void simulate()
+{
+	int grid[gridWidth][gridWidth] = { 0 }; // Indexing @ 1 -> 23
+	Player indi;
+
+	for (int i = 0; i < trials; i++)
+	{
+		// Reset
+		indi.reset();
+
+		// Variables
+		int moves = 0, dir;
+
+		while (indi.alive && !indi.rescued)
+		{
+			// Get an acceptable direction
+			do {
+				dir = getRandDir(4);
+			} while (!moveIsSafe(indi, dir));	// While not safe...choose a new move
+
+			// Move the player
+			makeMove(indi, dir);
+			moves++;
+
+			// CHECK INDI'S VITALS
+			// ASSUMING DEATH BY VITALS INDEPENDENT OF GRID LOCATION
+			// i.e. hunger < 0 AND (x,y) on airport -> DEATH
+
+			// Dies of boredom AND hunger
+			if (moves > boredomValue && indi.hunger < 0)
+			{
+				indi.alive = false;
+				indi.stat.boredDeaths++;
+				indi.stat.hungerDeaths++;
+				updateGrid(grid, indi.coord);
+				break;
+			}
+			// Dies of boredom
+			else if (moves > boredomValue) // MORE THAN 80 steps
+			{
+				indi.alive = false;
+				indi.stat.boredDeaths++;
+				updateGrid(grid, indi.coord);
+				break;
+			}
+			// Dies of hunger
+			else if (indi.hunger < 0) // MORE THAN 60 steps
+			{
+				indi.alive = false;
+				indi.stat.hungerDeaths++;
+				updateGrid(grid, indi.coord);
+				break;
+			}
+
+			// CHECK X,Y COORDINATES
+			if (indi.coord.isAirport())
+			{
+				indi.rescued = true;
+				updateGrid(grid, indi.coord);
+				indi.stat.successes++;
+				indi.stat.totalMoves += moves;
+				break;
+			}
+			else if (indi.coord.isPizza() && indi.hasMoney)
+			{
+				indi.hasMoney = false;
+				indi.hunger = hungerValue;
+			}
+			else if (indi.coord.isBank())
+				indi.hasMoney = true;
+		}
+	}
+	display(grid, indi.stat);
+}
+
+void display(int grid[gridWidth][gridWidth], Stats s)
+{
+	// Open File
+	ofstream fout;
+	fout.open("Numbskull_Island.txt");
+
+	// COUT Items
+	cout << "Success Frequency: " << ((double)s.successes / trials) * 100 << endl;
+	cout << "Average moves to success: " << (double)s.totalMoves / s.successes << endl;
+	cout << "Boredom Frequency: " << ((double)s.boredDeaths / trials) * 100 << endl;
+	cout << "Hunger Frequency: " << ((double)s.hungerDeaths / trials) * 100 << endl;
+
+	// FOUT Grid
+	int x = 1, y = 1, i = gridWidth, row = 11;
+	bool notEnd = true, line = true;
+	for (int n = -11; n < gridHalf; n++)
+		fout << "|" << setw(3) << right << n << setw(3) << "|";
+	fout << endl;
+	while (i > 0)
+	{
+		if (line)
+		{
+			for (int j = 0; j < gridWidth - 1; j++)
+				fout << " ----- ";
+			fout << "----- " << endl;
+			line = false;
+			i--;
+		}
+		else
+		{
+			y = 1;
+			for (int j = 0; j < gridWidth - 1; j++)
+			{
+				if (grid[x][y] == 0)
+				{
+					fout << "|" << setw(5) << left << "" << "|";
+					y++;
+				}
+				else
+					fout << fixed << setprecision(2) << "|" << setw(5) << right << ((double)grid[x][y++] / trials) * 100 << "|";
+			}
+			fout << right << setw(3) << row-- << endl;
+			line = true;
+			notEnd = false;
+			x++;
+		}
+	}
+}
+
+bool moveIsSafe(Player &indi, int direction)
+{
+	// Returns true or false dependent on whether the next directional move is safe.
+	XY next = indi.coord;
+
+	switch (direction) {
+	case 0:
+		next.y++;
+		break;
+	case 1:
+		next.x++;
+		break;
+	case 2:
+		next.y--;
+		break;
+	case 3:
+		next.x--;
+		break;
+	default:
+		break;
+	}
+
+	return next.isSafe();
+}
+
+void makeMove(Player &p, int direction)
+{
+	// Increment Player Coordinate
+	switch (direction) {
+	case 0:
+		p.coord.y++;
+		break;
+	case 1:
+		p.coord.x++;
+		break;
+	case 2:
+		p.coord.y--;
+		break;
+	case 3:
+		p.coord.x--;
+		break;
+	default:
+		break;
+	}
+
+	// Decrement Hunger Measure by 1
+	p.hunger--;
+}
+
+void updateGrid(int grid[gridWidth][gridWidth], XY co)
+{
+	// Transform the XY coordinates to 2D Array Coordinates
+	co.x += gridHalf;
+	co.y = gridHalf - co.y;
+	grid[co.y][co.x]++;
+}
+
+int getRandDir(int highEnd)
+{
+	// Returns a random number between 0 & (highEnd - 1), accounting for small modulo bias
+	int randIndex;
+	do {
+		randIndex = rand();
+	} while (randIndex >= (RAND_MAX - (RAND_MAX % highEnd)));
+	return randIndex % highEnd;
+}
