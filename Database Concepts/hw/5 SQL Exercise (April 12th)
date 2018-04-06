@@ -1,0 +1,46 @@
+1. For each employee having a dependent, retrieve the employee’s name along with his/her dependent name(s).
+
+select Fname, Minit, Lname, Dependent_name
+from EMPLOYEE, DEPENDENT
+where Ssn=Essn
+order by Lname;
+
+2. For each department, list its name along with the names of projects the department controls.
+
+select Dname, Pname
+from DEPARTMENT, PROJECT
+where Dnumber=Dnum
+order by Dname;
+
+3. For each department, lists its name, manager’s name, and the names of projects it controls.
+
+select Dname, Fname, Minit, Lname, Pname
+from DEPARTMENT, EMPLOYEE, PROJECT
+where Dnumber=Dno and Dnumber=Dnum and Mgr_ssn=Ssn
+order by Dname;
+
+4. For each employee, list his/her first name, last name, and his/her department manager’s name.
+
+select a1.Fname, a1.Lname, 
+        (select (a2.Fname || ' ' || a2.Lname) from EMPLOYEE a2 where Ssn=a1.Super_ssn) as Manager_Ssn
+from EMPLOYEE a1;
+
+5. For the department that controls more projects than any other department, retrieve its department number.
+
+select Dnum
+from PROJECT
+group by Dnum
+having count(*) = (select max(count(*))
+                    from PROJECT
+                    group by Dnum);
+
+6. Find the name of employee who supervises more employees than any other supervisor.
+
+select Fname, Minit, Lname
+from EMPLOYEE
+where Ssn in (select Super_ssn
+                from EMPLOYEE
+                group by Super_ssn
+                having count(*) = (select max(count(*))
+                                    from EMPLOYEE
+                                    group by Super_ssn));
