@@ -1,0 +1,43 @@
+1. List the names of the employees who work for department 5.
+
+select Fname, Minit, Lname
+from EMPLOYEE
+where Dno=5;
+
+2. For each department, list its department number and the average salary of its employees.
+
+select Dnumber, avg(Salary)
+from DEPARTMENT, EMPLOYEE
+where Dnumber = Dno
+group by Dnumber
+order by Dnumber;
+
+3. For each department, list its department number, name, and the average salary of its employees.
+
+select Dnumber, Dname, avg(Salary)
+from DEPARTMENT, EMPLOYEE
+where Dnumber=Dno
+group by Dnumber, Dname
+order by Dnumber DESC;
+
+4. Retrieve the names of departments that locate in Houston.
+
+select Dname
+from DEPARTMENT
+where Dnumber in (select Dnumber
+                    from DEPT_LOCATIONS
+                    where Dlocation='Houston');
+
+5. Retrieve the names of employees who work on project 2.
+
+select Fname, Minit, Lname
+from EMPLOYEE, WORKS_ON
+where Ssn=Essn and Pno=2
+order by Lname;
+
+6. For each employee that works more than 30 hours on a project, list his/her name along with the corresponding project name and hours.
+
+select Fname, Minit, Lname, Pname, Hours
+from EMPLOYEE, WORKS_ON, PROJECT
+where Ssn=Essn and Pno=Pnumber and Hours > 30
+order by Hours;
