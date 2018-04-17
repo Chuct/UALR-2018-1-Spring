@@ -1,0 +1,90 @@
+// Colin Chu
+// Monte Carlo Simulation
+// Assignment 9 - Airplane Seating
+// 4/17/2018
+
+#include <iostream>
+#include <fstream>
+#include <cstdlib>
+#include <iomanip>
+using namespace std;
+
+// DATA STRUCTURES
+
+/* Singular Airplane Seat */
+struct Seat {
+	int passengerNum = -1;	// -1 b/c Indexing: 0 -> End
+	int seatNum = -1;	// -1 b/c Indexing: 0 -> End
+	bool isEmpty() { return passengerNum < 0; };
+	bool isValid() { return (passengerNum == seatNum); }
+};
+
+/* Plane - Which contains a dynamic # of seats */
+struct Plane {
+
+	// Size of the plane
+	int numSeats;
+	
+	// Array of seats
+	Seat *seat = NULL;
+
+	// Array of seat indices which are open / available
+	// Seat indices will be swapped once used...
+	// ...Similar to 52 Cards Assignment
+	int *openSeat = NULL;
+
+	// Constructor
+	Plane(int s) 
+	{
+		numSeats = s;
+		seat = new Seat[numSeats];
+		openSeat = new int[numSeats];
+		for (int i = 0; i < numSeats; i++)
+		{
+			seat[i].seatNum = i;
+			openSeat[i] = i;
+		}
+	}
+
+	// Methods
+	bool isFull() {	return numSeats == 0; } // 1
+
+	void fillAssignedSeat(int passenger) // 2
+	{
+		// i.e. Passenger i -> Seat i
+		seat[passenger].passengerNum = passenger;
+		shrinkPool(passenger);	// Passenger == Seat in this Case
+	}
+
+	void fillRandSeat(int passenger) // 3
+	{
+		int random;
+		do {
+			random = rand();
+		} while (random >= (RAND_MAX - (RAND_MAX % numSeats)));
+		random = random % numSeats;
+		int which = openSeat[random];
+		seat[which].passengerNum = passenger;
+		shrinkPool(which);
+	}
+
+	void shrinkPool(int whichSeat) // 4
+	{
+		// FUNCTION: Decrements the pool of open seats to randomly choose from.
+		int temp, i, last = numSeats - 1;
+
+		// Find "whichSeats" index in openSeats array
+		for (i = 0; i < numSeats; i++)
+			if (openSeat[i] == whichSeat)
+				break;
+
+		// Swap with last
+		if (numSeats > 1)
+		{
+			temp = openSeat[i];
+			openSeat[i] = openSeat[last];
+			openSeat[last] = temp;
+		}
+		numSeats--;
+	}
+};
