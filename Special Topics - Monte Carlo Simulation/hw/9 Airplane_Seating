@@ -1,0 +1,65 @@
+// Colin Chu
+// Monte Carlo Simulation
+// Assignment 9 - Airplane Seating
+// 4/17/2018
+
+#include "9 AirSeat_Structs.cpp" 
+
+// CONSTANTS
+const int startN = 100;
+const int endN = 100;
+const int trials = 100000;
+
+// FUNCTION DECLARATIONS
+void simulate();
+
+// MAIN
+void main()
+{
+	simulate();
+	system("pause");
+}
+
+// FUNCTION DEFINITIONS
+void simulate()
+{
+	for (int i = startN; i <= endN; i++)
+	{
+		// Counter Array
+		int *stat = new int[i];
+		for (int j = 0; j < i; j++)
+			stat[j] = 0;
+
+		for (int j = 0; j < trials; j++)
+		{
+			Plane plane(i);	// Creates a Plane object with j open seats
+			int p = 0;
+
+			// First passenger randomly selects a seat
+			plane.fillRandSeat(p++);
+			
+			// Fill seats
+			while (!plane.isFull()) // While Plane NOT FULL...
+				if (plane.seat[p].isEmpty()) // If seat[p] IS EMPTY
+					plane.fillAssignedSeat(p++);
+				else						 // If seat[p] IS FILLED
+					plane.fillRandSeat(p++);
+
+			// Bump counters for valid seating
+			for (int k = 0; k < i; k++)
+				if (plane.seat[k].isValid())
+					stat[k]++;
+
+		} // For(0 -> trials)
+
+		// DISPLAY
+
+		// Header
+		cout << right << setw(5) << "i: " << i << endl;
+		// Data
+		for (int k = 0; k < i; k++)
+			cout << right << setw(3) << k + 1 << ": " << (double)stat[k] / trials << endl;
+		cout << endl;
+
+	} // For(startN -> endN)
+} // Simulate
